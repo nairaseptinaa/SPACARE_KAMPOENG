@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pembayaran – SPA Kampoeng</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --cream:#FAF4F0; --blush:#F2E8E2; --rose:#C0736A;
+      --deep:#6B1E1E;  --muted:#8B6E67; --dark:#2C1A17;
+      --gold:#C9A96E;  --white:#FFFFFF;
+      --green:#2D7A4F; --blue:#1A5C8B;
+    }
+    body { font-family:'Nunito Sans',sans-serif; background:var(--cream); color:var(--dark); min-height:100vh; font-size:15px; line-height:1.65; }
+    /* TYPOGRAPHY REFINEMENT */
+    button, input, select, a, p, span, li { font-family:'Nunito Sans',sans-serif; }
+    h1,h2,h3,h4 { font-family:'Cormorant Garamond',serif; font-weight:700; letter-spacing:-.02em; }
+    h1,h2,h3,h4 { font-family:'Cormorant Garamond',serif; font-weight:400; }
+
+    /* TOP BAR */
+    .topbar {
+      background:var(--deep); color:white; padding:16px 40px;
+      display:flex; align-items:center; gap:16px;
+    }
+    .topbar a { color:rgba(255,255,255,0.7); text-decoration:none; font-size:12px; letter-spacing:1px; }
+    .topbar a:hover { color:var(--gold); }
+    .topbar .logo { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:22px; color:white; margin-left:auto; }
+
+    /* PROGRESS STEPS */
+    .steps {
+      background:white; padding:20px 40px;
+      display:flex; justify-content:center; gap:0;
+      border-bottom:1px solid #eee;
+    }
+    .step {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 24px; position:relative;
+      font-size:11px; letter-spacing:2px; text-transform:uppercase;
+      color:var(--muted);
+    }
+    .step.active { color:var(--deep); }
+    .step.done { color:var(--green); }
+    .step-num {
+      width:28px; height:28px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:600;
+      background:#eee; color:var(--muted);
+      flex-shrink:0;
+    }
+    .step.active .step-num { background:var(--deep); color:white; }
+    .step.done .step-num { background:var(--green); color:white; }
+    .step-sep { width:48px; height:2px; background:#eee; align-self:center; }
+    .step-sep.done { background:var(--green); }
+
+    /* MAIN LAYOUT */
+    .pay-layout {
+      max-width:960px; margin:40px auto; padding:0 24px;
+      display:grid; grid-template-columns:1fr 380px; gap:32px;
+    }
+
+    /* ORDER SUMMARY */
+    .summary-card {
+      background:white; border-radius:16px; padding:28px;
+      border:1px solid #eeddd8; height:fit-content;
+    }
+    .summary-card h3 { font-size:26px; color:var(--deep); margin-bottom:20px; }
+    .sum-row {
+      display:flex; justify-content:space-between; padding:12px 0;
+      border-bottom:1px dashed #eeddd8; font-size:13px;
+    }
+    .sum-row:last-child { border-bottom:none; }
+    .sum-row.total {
+      border-top:2px solid var(--deep); border-bottom:none;
+      margin-top:8px; padding-top:16px;
+    }
+    .sum-row.total .label { font-weight:600; color:var(--deep); font-size:14px; }
+    .sum-row.total .val {
+      font-family:'Cormorant Garamond',serif; font-size:28px; color:var(--deep);
+    }
+    .sum-row .label { color:var(--muted); }
+    .sum-row .val { color:var(--dark); font-weight:600; }
+    .booking-id-badge {
+      background:var(--blush); border-radius:8px; padding:10px 14px;
+      font-size:11px; color:var(--muted); letter-spacing:1px;
+      margin-bottom:16px; display:flex; justify-content:space-between;
+    }
+    .booking-id-badge strong { color:var(--deep); font-size:13px; }
+    .countdown {
+      background:linear-gradient(135deg,#fff3cd,#ffe69c);
+      border-radius:8px; padding:10px 14px; margin-top:12px;
+      font-size:12px; color:#856404; text-align:center;
+    }
+    #timer { font-weight:700; font-size:16px; }
+
+    /* PAYMENT METHODS */
+    .pay-methods { display:flex; flex-direction:column; gap:20px; }
+    .pay-methods h2 { font-size:36px; color:var(--deep); margin-bottom:4px; }
+    .pay-methods .sub { font-size:11px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:8px; }
+
+    /* METHOD CARD */
+    .method-card {
+      background:white; border-radius:14px; border:2px solid transparent;
+      overflow:hidden; cursor:pointer; transition:all .3s;
+    }
+    .method-card:hover { border-color:#ddd0ca; }
+    .method-card.selected { border-color:var(--deep); }
+    .method-header {
+      display:flex; align-items:center; gap:14px; padding:18px 22px;
+    }
+    .method-icon {
+      width:48px; height:48px; border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:24px; flex-shrink:0;
+    }
+    .method-icon.va { background:linear-gradient(135deg,#1A5C8B22,#1A5C8B11); }
+    .method-icon.qr { background:linear-gradient(135deg,#2D7A4F22,#2D7A4F11); }
+    .method-icon.cash { background:linear-gradient(135deg,#C9A96E22,#C9A96E11); }
+    .method-title { flex:1; }
+    .method-title h4 { font-size:16px; color:var(--dark); margin-bottom:2px; }
+    .method-title p { font-size:11px; color:var(--muted); letter-spacing:1px; }
+    .method-radio {
+      width:20px; height:20px; border-radius:50%;
+      border:2px solid #ddd; display:flex; align-items:center; justify-content:center;
+      transition:all .3s;
+    }
+    .method-card.selected .method-radio { border-color:var(--deep); }
+    .method-card.selected .method-radio::after {
+      content:''; width:10px; height:10px; border-radius:50%;
+      background:var(--deep); display:block;
+    }
+    .method-body { padding:0 22px 22px; display:none; }
+    .method-card.selected .method-body { display:block; }
+
+    /* VA BODY */
+    .bank-list { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+    .bank-btn {
+      padding:12px 8px; border-radius:10px; border:1px solid #ddd;
+      background:white; cursor:pointer; text-align:center;
+      font-family:'Nunito Sans',sans-serif; font-size:11px; letter-spacing:1px;
+      color:var(--dark); transition:all .25s;
+    }
+    .bank-btn:hover, .bank-btn.active { border-color:var(--blue); background:#EEF4F8; color:var(--blue); }
+    .bank-btn .blogo { font-size:22px; display:block; margin-bottom:4px; }
+    .va-number-box {
+      background:var(--blush); border-radius:10px; padding:14px 18px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .va-number-box .label { font-size:10px; letter-spacing:2px; color:var(--muted); }
+    .va-number-box .number { font-size:18px; color:var(--deep); font-weight:600; letter-spacing:3px; }
+    .copy-btn {
+      background:var(--deep); color:white; border:none;
+      padding:8px 14px; border-radius:8px; cursor:pointer;
+      font-family:'Nunito Sans',sans-serif; font-size:11px; letter-spacing:1px;
+      transition:background .25s;
+    }
+    .copy-btn:hover { background:var(--rose); }
+
+    /* QRIS BODY */
+    .qris-wrap { text-align:center; padding:10px 0; }
+    .qris-frame {
+      width:180px; height:180px; margin:0 auto 16px;
+      background:white; border:2px solid #eee; border-radius:12px;
+      padding:12px; position:relative; display:inline-block;
+    }
+    .qr-inner {
+      width:100%; height:100%;
+      background:repeating-linear-gradient(
+        0deg, transparent, transparent 10px, #0001 10px, #0001 11px
+      ),
+      repeating-linear-gradient(
+        90deg, transparent, transparent 10px, #0001 10px, #0001 11px
+      );
+      border-radius:4px; position:relative;
+    }
+    .qr-corner {
+      position:absolute; width:28px; height:28px;
+      border:4px solid var(--deep);
+    }
+    .qr-corner.tl { top:0; left:0; border-right:none; border-bottom:none; }
+    .qr-corner.tr { top:0; right:0; border-left:none; border-bottom:none; }
+    .qr-corner.bl { bottom:0; left:0; border-right:none; border-top:none; }
+    .qr-center {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:40px; height:40px; background:var(--deep);
+      border-radius:6px; display:flex; align-items:center; justify-content:center;
+      font-size:18px;
+    }
+    .qris-label { font-size:11px; color:var(--muted); letter-spacing:1px; }
+    .qris-merchant { font-size:14px; color:var(--deep); font-weight:600; margin:4px 0; }
+
+    /* CASH BODY */
+    .cash-info { background:linear-gradient(135deg,#FFF8E6,#FFF0CC); border-radius:10px; padding:16px; }
+    .cash-info p { font-size:12px; color:#856404; line-height:1.8; }
+    .cash-info ul { margin:8px 0 0 16px; }
+    .cash-info li { font-size:12px; color:#856404; margin-bottom:4px; }
+
+    /* PAY BUTTON */
+    .pay-btn {
+      width:100%; background:var(--deep); color:white; border:none;
+      padding:18px; border-radius:12px; font-family:'Nunito Sans',sans-serif;
+      font-size:13px; letter-spacing:3px; text-transform:uppercase;
+      cursor:pointer; margin-top:20px; transition:background .3s, transform .2s;
+    }
+    .pay-btn:hover { background:var(--rose); transform:translateY(-2px); }
+    .pay-btn:disabled { background:#ccc; cursor:not-allowed; transform:none; }
+
+    .secure-note {
+      text-align:center; margin-top:12px; font-size:11px; color:var(--muted);
+      letter-spacing:1px;
+    }
+
+    /* SUCCESS MODAL */
+    .modal-overlay {
+      display:none; position:fixed; inset:0; z-index:9999;
+      background:rgba(44,26,23,0.7); backdrop-filter:blur(4px);
+      align-items:center; justify-content:center;
+    }
+    .modal-overlay.show { display:flex; }
+    .modal {
+      background:white; border-radius:24px; padding:48px 40px;
+      max-width:480px; width:90%; text-align:center;
+      animation:popIn .4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes popIn {
+      from { opacity:0; transform:scale(0.8); }
+      to   { opacity:1; transform:scale(1); }
+    }
+    .modal .check { font-size:64px; margin-bottom:16px; }
+    .modal h2 { font-size:40px; color:var(--deep); margin-bottom:8px; }
+    .modal p { font-size:13px; color:var(--muted); line-height:1.8; margin-bottom:8px; }
+    .modal .booking-ref {
+      background:var(--blush); border-radius:10px; padding:14px;
+      font-size:14px; color:var(--deep); font-weight:600; margin:16px 0;
+      letter-spacing:2px;
+    }
+    .modal .btn-home {
+      display:inline-block; background:var(--deep); color:white;
+      padding:14px 32px; border-radius:10px; text-decoration:none;
+      font-size:12px; letter-spacing:3px; text-transform:uppercase;
+      transition:background .3s; margin-top:8px;
+    }
+    .modal .btn-home:hover { background:var(--rose); }
+
+    @media (max-width:768px) {
+      .pay-layout { grid-template-columns:1fr; }
+      .summary-card { order:-1; }
+      .bank-list { grid-template-columns:repeat(2,1fr); }
+      .topbar { padding:12px 20px; }
+      .steps { padding:12px 16px; gap:0; overflow-x:auto; }
+      .step { padding:8px 14px; font-size:9px; }
+    }
+
+    /* ===== READABILITY UPGRADE: PAYMENT PAGE ===== */
+    :root {
+      --font-heading: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+      --font-body: 'Nunito Sans', 'Poppins', Arial, sans-serif;
+      --text-sm: clamp(14px, .82rem + .18vw, 15px);
+      --text-base: clamp(16px, .92rem + .25vw, 18px);
+      --text-md: clamp(18px, 1rem + .35vw, 20px);
+    }
+    body { font-family: var(--font-body) !important; font-size: var(--text-base) !important; line-height: 1.72 !important; font-weight: 500; }
+    h1,h2,h3,h4,.topbar .logo,.sum-row.total .val { font-family: var(--font-heading) !important; font-weight: 700 !important; }
+    button, input, select, a, p, span, li, div { font-family: var(--font-body); }
+    .topbar a, .step, .pay-methods .sub, .booking-id-badge, .countdown,
+    .sum-row, .method-desc, .upload-label, .note, .help-text {
+      font-size: var(--text-sm) !important;
+      line-height: 1.6 !important;
+    }
+    .summary-card h3 { font-size: clamp(30px, 1.6rem + 1vw, 42px) !important; }
+    .pay-methods h2 { font-size: clamp(38px, 2rem + 2vw, 58px) !important; }
+    .method-title, .sum-row.total .label { font-size: var(--text-md) !important; }
+    .sum-row.total .val { font-size: clamp(30px, 1.6rem + 1vw, 44px) !important; }
+    input, select, textarea, button, .pay-btn, .copy-btn { font-size: var(--text-base) !important; min-height: 48px; }
+    @media (max-width: 768px) { .topbar { padding: 14px 22px; } .step { font-size: 13px !important; padding: 8px 10px; } }
+
+
+
+    /* ===== GLOBAL FONT SCALE UPGRADE V2: PAYMENT PAGE ===== */
+    :root {
+      --text-xs: clamp(16px, .9rem + .15vw, 17px);
+      --text-sm: clamp(17px, .95rem + .22vw, 19px);
+      --text-base: clamp(18px, 1rem + .32vw, 21px);
+      --text-md: clamp(20px, 1.08rem + .48vw, 24px);
+      --heading-sm: clamp(36px, 1.8rem + 1.35vw, 52px);
+      --heading-md: clamp(48px, 2.35rem + 2.6vw, 76px);
+    }
+    html { font-size: 18px !important; }
+    body { font-size: var(--text-base) !important; line-height: 1.76 !important; font-weight: 500 !important; }
+    p, li, .sum-row, .method-title p, .cash-info p, .cash-info li, .modal p {
+      font-size: var(--text-base) !important;
+      line-height: 1.78 !important;
+    }
+    .topbar a, .step, .summary-label, .pay-methods .sub, .qris-label,
+    .booking-id-badge, .va-number-box .label {
+      font-size: var(--text-xs) !important;
+      line-height: 1.45 !important;
+    }
+    .topbar .logo { font-size: clamp(32px, 1.55rem + 1vw, 42px) !important; }
+    .summary-card h3, .modal h2 { font-size: var(--heading-sm) !important; line-height: 1.08 !important; }
+    .pay-methods h2 { font-size: var(--heading-md) !important; line-height: 1.04 !important; }
+    .method-title h4 { font-size: var(--text-md) !important; line-height: 1.25 !important; }
+    .sum-row.total .label { font-size: var(--text-md) !important; }
+    .sum-row.total .val { font-size: clamp(40px, 2rem + 1.4vw, 58px) !important; }
+    .va-number-box .number { font-size: clamp(26px, 1.3rem + .8vw, 38px) !important; }
+    button, .pay-btn, .copy-btn, a, input, select, textarea {
+      font-size: var(--text-sm) !important;
+      min-height: 54px !important;
+      line-height: 1.35 !important;
+    }
+    @media (max-width: 768px) {
+      html { font-size: 17px !important; }
+      body { font-size: 17px !important; }
+      .topbar { padding: 16px 22px !important; }
+      .step { font-size: 15px !important; padding: 9px 12px !important; }
+      .pay-methods h2 { font-size: clamp(42px, 11vw, 58px) !important; }
+    }
+
+
+
+    /* ===== PAYMENT UX FIX: MULTI METHOD, AGE FRIENDLY, ACCESSIBLE ===== */
+    *:focus-visible { outline: 4px solid rgba(201,169,110,.95); outline-offset: 4px; border-radius: 10px; }
+    .method-help {
+      background: #fffaf0;
+      border: 1px solid #f4dfae;
+      color: #705328;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+    .proof-upload {
+      margin-top: 16px;
+      background: #fffaf7;
+      border: 1px dashed #d6b9b0;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: left;
+    }
+    .proof-upload label {
+      display: block;
+      font-weight: 900;
+      color: var(--deep);
+      margin-bottom: 8px;
+    }
+    .proof-upload input {
+      width: 100%;
+      border: 1px solid #eadbd4;
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+    }
+    .method-card { min-height: 76px; }
+    .method-header { align-items: flex-start; }
+    .pay-assist {
+      background: rgba(255,255,255,.9);
+      border: 1px solid #eadbd4;
+      border-radius: 16px;
+      padding: 16px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="index.html">← Kembali</a>
+  <span class="logo">SPA Kampoeng</span>
+</div>
+
+<!-- STEPS -->
+<div class="steps">
+  <div class="step done">
+    <div class="step-num">✓</div>
+    <span>Booking</span>
+  </div>
+  <div class="step-sep done"></div>
+  <div class="step active" id="step2">
+    <div class="step-num">2</div>
+    <span>Pembayaran</span>
+  </div>
+  <div class="step-sep" id="sep2"></div>
+  <div class="step" id="step3">
+    <div class="step-num">3</div>
+    <span>Konfirmasi</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="pay-layout">
+
+  <!-- LEFT: PAYMENT METHODS -->
+  <div class="pay-methods">
+    <h2>Pilih Metode<br/>Pembayaran</h2>
+    <p class="sub">✦ Aman & Terpercaya</p>
+    <div class="method-help">Pilih metode yang paling mudah. Pelanggan dapat memakai Virtual Account, QRIS/dompet digital, atau bayar di tempat saat tiba di SPA.</div>
+
+    <!-- VIRTUAL ACCOUNT -->
+    <div class="method-card" id="method-va" onclick="selectMethod('va')">
+      <div class="method-header">
+        <div class="method-icon va">🏦</div>
+        <div class="method-title">
+          <h4>Virtual Account</h4>
+          <p>BCA · BNI · BRI · Mandiri · BSI</p>
+        </div>
+        <div class="method-radio"></div>
+      </div>
+      <div class="method-body">
+        <div class="bank-list">
+          <button class="bank-btn active" id="bank-bca" onclick="selectBank(event,'bca','1234 5678 9012 3456')">
+            <span class="blogo">🏦</span>BCA
+          </button>
+          <button class="bank-btn" id="bank-bni" onclick="selectBank(event,'bni','2345 6789 0123 4567')">
+            <span class="blogo">🏛️</span>BNI
+          </button>
+          <button class="bank-btn" id="bank-bri" onclick="selectBank(event,'bri','3456 7890 1234 5678')">
+            <span class="blogo">💳</span>BRI
+          </button>
+          <button class="bank-btn" id="bank-mandiri" onclick="selectBank(event,'mandiri','4567 8901 2345 6789')">
+            <span class="blogo">🏦</span>Mandiri
+          </button>
+          <button class="bank-btn" id="bank-bsi" onclick="selectBank(event,'bsi','5678 9012 3456 7890')">
+            <span class="blogo">🕌</span>BSI
+          </button>
+          <button class="bank-btn" id="bank-gopay" onclick="selectBank(event,'gopay','0812 5697 6887')">
+            <span class="blogo">💚</span>GoPay
+          </button>
+        </div>
+        <div class="va-number-box">
+          <div>
+            <div class="label">NOMOR VIRTUAL ACCOUNT</div>
+            <div class="number" id="va-number">1234 5678 9012 3456</div>
+          </div>
+          <button class="copy-btn" onclick="copyVA()">Salin</button>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.7;">
+          Transfer tepat sesuai nominal dan simpan ID booking. Admin dapat memverifikasi pembayaran berdasarkan data booking yang masuk.
+        </p>
+      </div>
+    </div>
+
+    <!-- QRIS -->
+    <div class="method-card" id="method-qris" onclick="selectMethod('qris')">
+      <div class="method-header">
+        <div class="method-icon qr">📱</div>
+        <div class="method-title">
+          <h4>QRIS</h4>
+          <p>Scan QR — GoPay · OVO · DANA · ShopeePay · LinkAja</p>
+        </div>
+        <div class="method-radio"></div>
+      </div>
+      <div class="method-body">
+        <div class="qris-wrap">
+          <div class="qris-frame">
+            <div class="qr-inner">
+              <div class="qr-corner tl"></div>
+              <div class="qr-corner tr"></div>
+              <div class="qr-corner bl"></div>
+              <div class="qr-center">🌸</div>
+            </div>
+          </div>
+          <p class="qris-label">SCAN & PAY</p>
+          <p class="qris-merchant">SPA Kampoeng</p>
+          <p class="qris-label">NMID: ID0123456789</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.7;">
+            Buka aplikasi dompet digital, pilih QRIS, lalu scan kode di atas. Setelah pembayaran, pelanggan dapat mengunggah bukti pembayaran untuk membantu proses verifikasi admin.
+          </p>
+          <div class="proof-upload">
+            <label for="payment-proof">Upload bukti pembayaran (opsional)</label>
+            <input type="file" id="payment-proof" accept="image/*,.pdf" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BAYAR DI TEMPAT -->
+    <div class="method-card" id="method-cash" onclick="selectMethod('cash')">
+      <div class="method-header">
+        <div class="method-icon cash">💵</div>
+        <div class="method-title">
+          <h4>Bayar di Tempat</h4>
+          <p>Bayar tunai atau QRIS saat tiba di SPA</p>
+        </div>
+        <div class="method-radio"></div>
+      </div>
+      <div class="method-body">
+        <div class="cash-info">
+          <p>⚠️ <strong>Perhatikan ketentuan berikut:</strong></p>
+          <ul>
+            <li>Hadir tepat waktu sesuai jadwal booking</li>
+            <li>Pembatalan kurang dari 2 jam dikenakan biaya 50%</li>
+            <li>Siapkan uang sesuai nominal untuk mempercepat proses</li>
+            <li>Booking akan disimpan selama <strong>24 jam</strong></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <button class="pay-btn" id="pay-btn" onclick="doPayment()">Bayar Sekarang</button>
+    <p class="secure-note">🔒 Data booking tercatat untuk admin · Pilih metode yang paling mudah</p>
+    <div class="pay-assist">Butuh bantuan? Kembali ke halaman utama lalu tekan tombol WhatsApp Admin. Sebutkan nama dan ID booking agar admin dapat mengecek pesanan.</div>
+  </div>
+
+  <!-- RIGHT: ORDER SUMMARY -->
+  <div>
+    <div class="summary-card">
+      <h3>Ringkasan Pesanan</h3>
+      <div class="booking-id-badge">
+        <span>Booking ID</span>
+        <strong id="sum-id">—</strong>
+      </div>
+      <div class="sum-row">
+        <span class="label">Nama</span>
+        <span class="val" id="sum-name">—</span>
+      </div>
+      <div class="sum-row">
+        <span class="label">Layanan</span>
+        <span class="val" id="sum-service">—</span>
+      </div>
+      <div class="sum-row">
+        <span class="label">Durasi</span>
+        <span class="val" id="sum-dur">—</span>
+      </div>
+      <div class="sum-row">
+        <span class="label">Tanggal</span>
+        <span class="val" id="sum-date">—</span>
+      </div>
+      <div class="sum-row">
+        <span class="label">Waktu</span>
+        <span class="val" id="sum-time">—</span>
+      </div>
+      <div class="sum-row">
+        <span class="label">Harga</span>
+        <span class="val" id="sum-price">—</span>
+      </div>
+      <div class="sum-row total">
+        <span class="label">TOTAL</span>
+        <span class="val" id="sum-total">—</span>
+      </div>
+      <div class="countdown">
+        ⏱ Selesaikan pembayaran dalam <span id="timer">14:59</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="check">✅</div>
+    <h2>Booking Berhasil!</h2>
+    <p>Terima kasih telah melakukan pemesanan di SPA Kampoeng.<br/>
+       Data booking telah masuk ke admin SPA Kampoeng.</p>
+    <div class="booking-ref" id="modal-ref">BK000000</div>
+    <p id="modal-detail" style="font-size:13px;color:var(--deep);font-weight:600;"></p>
+    <a href="index.html" class="btn-home">Kembali ke Beranda</a>
+  </div>
+</div>
+
+<script>
+  // ===== LOAD BOOKING DATA =====
+  const booking = JSON.parse(localStorage.getItem('pendingBooking') || '{}');
+  if (!booking.bookingId) {
+    alert('Data booking tidak ditemukan. Silakan isi form booking terlebih dahulu.');
+    window.location.href = 'index.html#contact';
+  } else {
+    document.getElementById('sum-id').textContent = booking.bookingId;
+    document.getElementById('sum-name').textContent = [booking.fname, booking.lname].filter(Boolean).join(' ');
+    document.getElementById('sum-service').textContent = booking.svcName;
+    document.getElementById('sum-dur').textContent = booking.dur + ' menit';
+    document.getElementById('sum-date').textContent = formatDate(booking.date);
+    document.getElementById('sum-time').textContent = booking.time;
+    const priceStr = 'Rp ' + parseInt(booking.price).toLocaleString('id-ID');
+    document.getElementById('sum-price').textContent = priceStr;
+    document.getElementById('sum-total').textContent = priceStr;
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d);
+    return dt.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+
+  // ===== COUNTDOWN TIMER =====
+  let seconds = 14 * 60 + 59;
+  const timerEl = document.getElementById('timer');
+  const interval = setInterval(() => {
+    seconds--;
+    if (seconds <= 0) { clearInterval(interval); timerEl.textContent = '00:00'; return; }
+    const m = Math.floor(seconds / 60).toString().padStart(2,'0');
+    const s = (seconds % 60).toString().padStart(2,'0');
+    timerEl.textContent = m + ':' + s;
+    if (seconds < 60) timerEl.style.color = '#dc3545';
+  }, 1000);
+
+  // ===== METHOD SELECTION =====
+  let selectedMethod = null;
+  function selectMethod(method) {
+    ['va','qris','cash'].forEach(m => {
+      document.getElementById('method-' + m).classList.remove('selected');
+    });
+    document.getElementById('method-' + method).classList.add('selected');
+    selectedMethod = method;
+  }
+  // Pre-select VA
+  selectMethod('va');
+
+  // ===== BANK SELECTION =====
+  function selectBank(e, bank, vaNum) {
+    e.stopPropagation();
+    document.querySelectorAll('.bank-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('bank-' + bank).classList.add('active');
+    document.getElementById('va-number').textContent = vaNum;
+  }
+
+  function copyVA() {
+    const num = document.getElementById('va-number').textContent;
+    navigator.clipboard.writeText(num.replace(/\s/g,''));
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Tersalin!';
+    setTimeout(() => btn.textContent = 'Salin', 2000);
+  }
+
+
+
+  function saveCustomerHistoryFromPayment(entry) {
+    const key = 'userBookingHistory';
+    let history = [];
+    try { history = JSON.parse(localStorage.getItem(key) || '[]'); } catch (err) { history = []; }
+    if (!Array.isArray(history)) history = [];
+    const id = entry.bookingId || entry.id;
+    const existing = history.findIndex(item => (item.bookingId || item.id) === id);
+    if (existing >= 0) history[existing] = { ...history[existing], ...entry, bookingId: id, id };
+    else history.push({ ...entry, bookingId: id, id });
+    history.sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')));
+    localStorage.setItem(key, JSON.stringify(history.slice(0, 20)));
+  }
+
+  // ===== DO PAYMENT =====
+  function doPayment() {
+    if (!selectedMethod) { alert('Pilih metode pembayaran terlebih dahulu!'); return; }
+    const btn = document.getElementById('pay-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Memproses...';
+
+    setTimeout(() => {
+      // Save to admin bookings
+      const bookings = JSON.parse(localStorage.getItem('adminBookings') || '[]');
+      const methodLabels = { va:'Virtual Account', qris:'QRIS', cash:'Bayar di Tempat' };
+      const newEntry = {
+        ...booking,
+        paymentMethod: methodLabels[selectedMethod],
+        status: selectedMethod === 'cash' ? 'Menunggu Bayar' : 'Lunas',
+        timestamp: new Date().toISOString(),
+        createdAt: booking.createdAt || new Date().toISOString(),
+        createdAtMs: booking.createdAtMs || Date.now(),
+        source: 'customer-booking',
+        id: booking.bookingId
+      };
+      const existingIndex = bookings.findIndex(item => item.bookingId === booking.bookingId);
+      if (existingIndex >= 0) bookings[existingIndex] = newEntry;
+      else bookings.push(newEntry);
+      localStorage.setItem('adminBookings', JSON.stringify(bookings));
+      localStorage.setItem('lastBooking', JSON.stringify(newEntry));
+      saveCustomerHistoryFromPayment(newEntry);
+      localStorage.removeItem('pendingBooking');
+
+      // Show success briefly, then open the dedicated confirmation page
+      document.getElementById('modal-ref').textContent = booking.bookingId;
+      document.getElementById('modal-detail').textContent =
+        booking.svcName + ' — ' + formatDate(booking.date) + ', ' + booking.time;
+      document.getElementById('successModal').classList.add('show');
+      clearInterval(interval);
+      setTimeout(() => { window.location.href = 'success.html'; }, 900);
+    }, 2200);
+  }
+
+
+  // ===== PAYMENT UX OVERRIDE: dynamic copy and realistic status =====
+  function updatePaymentButtonCopy() {
+    const btn = document.getElementById('pay-btn');
+    if (!btn) return;
+    const labels = {
+      va: 'Konfirmasi Pembayaran VA',
+      qris: 'Saya Sudah Bayar QRIS',
+      cash: 'Konfirmasi Bayar di Tempat'
+    };
+    btn.textContent = labels[selectedMethod] || 'Pilih Metode Pembayaran';
+  }
+
+  function selectMethod(method) {
+    ['va','qris','cash'].forEach(m => {
+      const card = document.getElementById('method-' + m);
+      if (card) card.classList.remove('selected');
+    });
+    const selected = document.getElementById('method-' + method);
+    if (selected) selected.classList.add('selected');
+    selectedMethod = method;
+    updatePaymentButtonCopy();
+  }
+
+  function doPayment() {
+    if (!selectedMethod) { alert('Pilih metode pembayaran terlebih dahulu.'); return; }
+    const btn = document.getElementById('pay-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Memproses...';
+
+    setTimeout(() => {
+      const bookings = JSON.parse(localStorage.getItem('adminBookings') || '[]');
+      const methodLabels = { va:'Virtual Account', qris:'QRIS / Dompet Digital', cash:'Bayar di Tempat' };
+      const proofInput = document.getElementById('payment-proof');
+      const proofName = proofInput && proofInput.files && proofInput.files[0] ? proofInput.files[0].name : '';
+      const newEntry = {
+        ...booking,
+        paymentMethod: methodLabels[selectedMethod],
+        paymentProof: proofName,
+        status: selectedMethod === 'cash' ? 'Menunggu Bayar' : 'Menunggu Konfirmasi',
+        timestamp: new Date().toISOString(),
+        createdAt: booking.createdAt || new Date().toISOString(),
+        createdAtMs: booking.createdAtMs || Date.now(),
+        source: 'customer-booking',
+        id: booking.bookingId
+      };
+      const existingIndex = bookings.findIndex(item => item.bookingId === booking.bookingId);
+      if (existingIndex >= 0) bookings[existingIndex] = newEntry;
+      else bookings.push(newEntry);
+      localStorage.setItem('adminBookings', JSON.stringify(bookings));
+      localStorage.setItem('lastBooking', JSON.stringify(newEntry));
+      saveCustomerHistoryFromPayment(newEntry);
+      localStorage.removeItem('pendingBooking');
+      document.getElementById('modal-ref').textContent = booking.bookingId;
+      document.getElementById('modal-detail').textContent =
+        booking.svcName + ' — ' + formatDate(booking.date) + ', ' + booking.time;
+      document.getElementById('successModal').classList.add('show');
+      clearInterval(interval);
+      setTimeout(() => { window.location.href = 'success.html'; }, 900);
+    }, 1600);
+  }
+
+  updatePaymentButtonCopy();
+
+</script>
+</body>
+</html>

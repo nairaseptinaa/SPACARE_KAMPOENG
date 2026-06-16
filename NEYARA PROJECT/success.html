@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Booking Berhasil - SPA Kampoeng Sukoharjo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream:#FAF4F0; --blush:#F2E8E2; --rose:#C0736A; --deep:#6B1E1E;
+      --muted:#8B6E67; --dark:#2C1A17; --gold:#C9A96E; --white:#FFFFFF; --green:#207245;
+    }
+    body {
+      min-height: 100vh;
+      font-family: 'Nunito Sans', sans-serif;
+      color: var(--dark);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(201,169,110,.24), transparent 28%),
+        radial-gradient(circle at 84% 18%, rgba(192,115,106,.22), transparent 30%),
+        linear-gradient(135deg, #fff8f2 0%, #f7e8df 48%, #eed2c9 100%);
+      overflow-x: hidden;
+      display: grid;
+      place-items: center;
+      padding: 38px 18px;
+    }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+    .success-wrap {
+      width: min(980px, 100%);
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .success-main, .success-side {
+      background: rgba(255,255,255,.82);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,.72);
+      box-shadow: 0 28px 80px rgba(44,26,23,.14);
+      border-radius: 30px;
+      padding: 34px;
+    }
+    .success-main { text-align: center; }
+    .spark-badge {
+      width: 96px; height: 96px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--deep), var(--rose));
+      color: white;
+      font-size: 46px;
+      box-shadow: 0 18px 38px rgba(107,30,30,.24);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); box-shadow: 0 18px 38px rgba(107,30,30,.24); }
+      50% { transform: scale(1.06); box-shadow: 0 24px 56px rgba(107,30,30,.32); }
+    }
+    h1, h2 { font-family: 'Cormorant Garamond', serif; font-weight: 700; color: var(--deep); line-height: 1.12; letter-spacing: -.02em; }
+    h1 { font-size: clamp(40px, 7vw, 68px); margin-bottom: 12px; }
+    .lead { color: var(--muted); line-height: 1.85; font-size: 15px; max-width: 620px; margin: 0 auto 22px; }
+    .booking-ref {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--blush);
+      color: var(--deep);
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 22px;
+    }
+    .detail-box {
+      text-align: left;
+      background: white;
+      border: 1px solid #efdfd8;
+      border-radius: 22px;
+      padding: 20px;
+      margin: 18px 0 22px;
+      display: grid;
+      gap: 10px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      border-bottom: 1px dashed #eadbd4;
+      padding-bottom: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .detail-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .detail-row strong { color: var(--dark); text-align: right; }
+    .qa-card {
+      background: linear-gradient(135deg, #f8fff9, #e7f5ec);
+      border: 1px solid #cce8d4;
+      border-radius: 22px;
+      padding: 22px;
+      text-align: left;
+    }
+    .qa-card h2 { font-size: 28px; margin-bottom: 8px; }
+    .qa-card p { color: #46634f; font-size: 14px; line-height: 1.75; margin-bottom: 16px; }
+    .action-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      border: none;
+      border-radius: 999px;
+      padding: 13px 18px;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .2s, opacity .2s;
+    }
+    .btn:hover { transform: translateY(-1px); opacity: .92; }
+    .btn-primary { background: var(--deep); color: white; }
+    .btn-wa { background: #23A455; color: white; }
+    .btn-soft { background: var(--blush); color: var(--deep); }
+    .success-side { display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+    .side-note {
+      border-left: 4px solid var(--gold);
+      background: #fffaf0;
+      border-radius: 18px;
+      padding: 18px;
+      color: #705328;
+      font-size: 13px;
+      line-height: 1.75;
+    }
+    .mini-status {
+      display: grid;
+      gap: 12px;
+    }
+    .mini-status div {
+      background: white;
+      border: 1px solid #efdfd8;
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .mini-status span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .mini-status strong { color: var(--deep); font-size: 15px; }
+    @media (max-width: 820px) {
+      .success-wrap { grid-template-columns: 1fr; }
+      .success-main, .success-side { padding: 24px; border-radius: 24px; }
+      .detail-row { flex-direction: column; gap: 4px; }
+      .detail-row strong { text-align: left; }
+    }
+
+    /* ===== READABILITY UPGRADE: SUCCESS PAGE ===== */
+    :root {
+      --font-heading: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+      --font-body: 'Nunito Sans', 'Poppins', Arial, sans-serif;
+      --text-sm: clamp(14px, .82rem + .18vw, 15px);
+      --text-base: clamp(16px, .92rem + .25vw, 18px);
+      --text-md: clamp(18px, 1rem + .35vw, 20px);
+    }
+    body { font-family: var(--font-body) !important; font-size: var(--text-base) !important; line-height: 1.72 !important; font-weight: 500; }
+    h1,h2 { font-family: var(--font-heading) !important; font-weight: 700 !important; }
+    h1 { font-size: clamp(48px, 7vw, 76px) !important; }
+    .lead { font-size: var(--text-base) !important; line-height: 1.8 !important; }
+    .booking-ref, .detail-row, .qa-card p, .success-note, .side-item,
+    .side-item p, .reminder-copy, .mini-label {
+      font-size: var(--text-sm) !important;
+      line-height: 1.65 !important;
+    }
+    .detail-row strong, .side-item strong, .qa-card strong { font-size: var(--text-base) !important; }
+    a, button, .btn, .wa-btn, .calendar-btn, .notif-btn { font-family: var(--font-body) !important; font-size: var(--text-base) !important; min-height: 48px; }
+    @media (max-width: 768px) { h1 { font-size: clamp(42px, 12vw, 58px) !important; } .success-main, .success-side { padding: 26px; } }
+
+
+
+    /* ===== GLOBAL FONT SCALE UPGRADE V2: SUCCESS PAGE ===== */
+    :root {
+      --text-xs: clamp(16px, .9rem + .15vw, 17px);
+      --text-sm: clamp(17px, .95rem + .22vw, 19px);
+      --text-base: clamp(18px, 1rem + .32vw, 21px);
+      --text-md: clamp(20px, 1.08rem + .48vw, 24px);
+      --heading-lg: clamp(60px, 3rem + 4vw, 98px);
+      --heading-sm: clamp(36px, 1.8rem + 1.35vw, 52px);
+    }
+    html { font-size: 18px !important; }
+    body { font-size: var(--text-base) !important; line-height: 1.76 !important; font-weight: 500 !important; }
+    h1 { font-size: var(--heading-lg) !important; line-height: .98 !important; }
+    .qa-card h2 { font-size: var(--heading-sm) !important; line-height: 1.08 !important; }
+    .lead, .qa-card p, .detail-row, .side-item, .mini-status, p {
+      font-size: var(--text-base) !important;
+      line-height: 1.78 !important;
+    }
+    .success-badge, .side-label, .mini-status span {
+      font-size: var(--text-xs) !important;
+      line-height: 1.45 !important;
+      letter-spacing: 1.2px !important;
+    }
+    .detail-row strong, .side-item strong, .qa-card strong, .mini-status strong {
+      font-size: var(--text-md) !important;
+      line-height: 1.35 !important;
+    }
+    a, button, .btn, .wa-btn, .calendar-btn, .notif-btn {
+      font-size: var(--text-sm) !important;
+      min-height: 54px !important;
+      line-height: 1.35 !important;
+      padding: 14px 20px !important;
+    }
+    @media (max-width: 768px) {
+      html { font-size: 17px !important; }
+      body { font-size: 17px !important; }
+      h1 { font-size: clamp(50px, 13vw, 68px) !important; }
+      .success-main, .success-side { padding: 28px !important; }
+    }
+
+
+
+    /* ===== SUCCESS PAGE ACCESSIBILITY FIX ===== */
+    *:focus-visible { outline: 4px solid rgba(201,169,110,.95); outline-offset: 4px; border-radius: 10px; }
+    .next-step-list { text-align:left; margin: 14px 0 0 20px; color: var(--muted); line-height: 1.8; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      canvas { display: none !important; }
+    }
+
+  </style>
+</head>
+<body>
+  <canvas id="fireworks"></canvas>
+
+  <main class="success-wrap">
+    <section class="success-main">
+      <div class="spark-badge">🎆</div>
+      <h1>Booking Berhasil!</h1>
+      <p class="lead">Terima kasih. Booking appointment Anda sudah masuk ke panel admin SPA Kampoeng Sukoharjo dan dapat dilihat kembali melalui riwayat pemesanan di halaman utama.</p>
+      <ul class="next-step-list"><li>Simpan ID booking untuk pengecekan ulang.</li><li>Datang sesuai jadwal atau hubungi admin jika perlu mengubah waktu.</li><li>Untuk pembayaran non-tunai, simpan bukti pembayaran sampai admin melakukan verifikasi.</li></ul>
+      <div class="booking-ref" id="bookingId">ID Booking: -</div>
+
+      <div class="detail-box" id="bookingDetail">
+        <div class="detail-row"><span>Layanan</span><strong>-</strong></div>
+        <div class="detail-row"><span>Jadwal</span><strong>-</strong></div>
+        <div class="detail-row"><span>Status</span><strong>-</strong></div>
+      </div>
+
+      <div class="action-row">
+        <a href="index.html#booking-history" class="btn btn-primary">Lihat Riwayat Booking</a>
+        <a href="index.html" class="btn btn-soft">Kembali ke Beranda</a>
+      </div>
+    </section>
+
+    <aside class="success-side">
+      <div class="qa-card">
+        <h2>Butuh Q&amp;A seputar spa?</h2>
+        <p>Untuk Q&amp;A seputar spa, pelanggan dapat menghubungi pihak client melalui WhatsApp pada nomor <strong>+62 812-5697-6887</strong>.</p>
+        <a id="waLink" href="https://wa.me/6281256976887" target="_blank" rel="noopener" class="btn btn-wa">💬 Hubungi WhatsApp</a>
+      </div>
+
+      <div class="mini-status">
+        <div><span>Status Sistem</span><strong>Booking sudah tersimpan untuk admin</strong></div>
+        <div><span>Reminder</span><strong>Aktifkan notifikasi H-1 dari riwayat booking di halaman utama</strong></div>
+      </div>
+
+      <div class="side-note">
+        Catatan: reminder WhatsApp otomatis membutuhkan backend atau WhatsApp Business API. Pada versi statis ini, sistem menyediakan tombol WhatsApp, notifikasi browser, dan file kalender sebagai solusi praktis.
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const CLIENT_WHATSAPP_NUMBER = '6281256976887';
+    const booking = JSON.parse(localStorage.getItem('lastBooking') || 'null');
+
+    function rupiah(value) { return 'Rp ' + Number(value || 0).toLocaleString('id-ID'); }
+    function fmtDate(date) {
+      if (!date) return '-';
+      const dt = new Date(date + 'T00:00:00');
+      if (Number.isNaN(dt.getTime())) return date;
+      return dt.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    }
+    function safe(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    }
+
+    if (booking) {
+      const id = booking.bookingId || booking.id || '-';
+      document.getElementById('bookingId').textContent = 'ID Booking: ' + id;
+      document.getElementById('bookingDetail').innerHTML = `
+        <div class="detail-row"><span>Nama</span><strong>${safe([booking.fname, booking.lname].filter(Boolean).join(' ') || '-')}</strong></div>
+        <div class="detail-row"><span>Layanan</span><strong>${safe(booking.svcName || '-')} · ${rupiah(booking.price)}</strong></div>
+        <div class="detail-row"><span>Jadwal</span><strong>${safe(fmtDate(booking.date))}, ${safe(booking.time || '-')}</strong></div>
+        <div class="detail-row"><span>Status</span><strong>${safe(booking.status || 'Menunggu Bayar')}</strong></div>
+      `;
+      const message = [
+        'Halo SPA Kampoeng Sukoharjo, saya ingin bertanya seputar booking/treatment.',
+        '',
+        'ID Booking: ' + id,
+        'Nama: ' + [booking.fname, booking.lname].filter(Boolean).join(' '),
+        'Layanan: ' + (booking.svcName || '-'),
+        'Jadwal: ' + fmtDate(booking.date) + ', ' + (booking.time || '-')
+      ].join('\n');
+      document.getElementById('waLink').href = 'https://wa.me/' + CLIENT_WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
+    }
+
+    // Aesthetic fireworks animation without external library
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    function resize() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function launch(x = Math.random() * window.innerWidth, y = Math.random() * window.innerHeight * .48 + 40) {
+      const palette = ['#C9A96E', '#C0736A', '#F6D6CE', '#6B1E1E', '#FFFFFF'];
+      for (let i = 0; i < 42; i++) {
+        const angle = Math.PI * 2 * (i / 42);
+        const speed = 1.4 + Math.random() * 3.1;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 70 + Math.random() * 28,
+          age: 0,
+          size: 1.5 + Math.random() * 2.4,
+          color: palette[Math.floor(Math.random() * palette.length)]
+        });
+      }
+    }
+    function animate() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      particles = particles.filter(p => p.age < p.life);
+      particles.forEach(p => {
+        p.age++;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.025;
+        const alpha = 1 - p.age / p.life;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.fillStyle = p.color;
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(animate);
+    }
+    animate();
+    launch(window.innerWidth * .5, window.innerHeight * .18);
+    launch(window.innerWidth * .25, window.innerHeight * .30);
+    launch(window.innerWidth * .75, window.innerHeight * .28);
+    let burstCount = 0;
+    const burst = setInterval(() => {
+      launch();
+      burstCount++;
+      if (burstCount > 8) clearInterval(burst);
+    }, 520);
+  </script>
+</body>
+</html>
